@@ -1,3 +1,3 @@
 # covision
 Covid hackaton
-- For smartphone use flutter
+- For smartphone use React Native
