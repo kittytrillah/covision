@@ -7,7 +7,8 @@ Time-series DB: InfluxDB
 
 Relational DB: Sqlite (for test purposes)
 Database structure:
--> table places
+
+> table places
 - id
 - name
 - contascore
@@ -19,7 +20,8 @@ Database structure:
 - longitude_right_bottom
 - latitude_right_top
 - logitude_right_top
--> table contapoints
+
+> table contapoints
 - id
 - latitude
 - longitude
