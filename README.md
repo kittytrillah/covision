@@ -1,7 +1,10 @@
 # covision
 Covid hackaton
+
 - For smartphone use React Native
+
 Time-series DB: InfluxDB
+
 Relational DB: Sqlite (for test purposes)
 Database structure:
 -> table places
