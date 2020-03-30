@@ -7,7 +7,7 @@
  * @flow strict-local
  */
 
-import React, { Component } from 'react'
+import React, { Component, useState, useEffect } from 'react'
 import {
   StyleSheet,
   TouchableOpacity,
@@ -16,21 +16,48 @@ import {
 } from 'react-native'
 import MapView from 'react-native-map-clustering';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import {Marker} from 'react-native-maps';
+import {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import GetLocation from 'react-native-get-location';
+import axios from 'axios';
+import Geolocation from 'react-native-geolocation-service';
+
+const BASE_URI = 'http://localhost:5000'; //for testing purposes
+
+const client = axios.create({
+    baseURL: BASE_URI,
+    json: true
+});
+
+interface IGeolocation {
+    latitude: number;
+    longitude: number;
+}
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
+}
 
 class App extends Component {
-    viewOne = null
-    viewTwo = null
 
-  // state = {
-  //   count: 0,
-  // };
     state = {
         m_location: null,
         m_latitude: null,
         m_longitude: null
     };
+
+
+    createContapoint(data){
+        axios({
+            method: 'post',
+            url: 'localhost:5000/set_contapoints',
+            data: {
+                latitude: this.state.m_latitude,
+                longitude: this.state.m_longitude
+            }
+        });
+    }
 
     onGetMyLocation = () => {
         this.setState({
@@ -41,9 +68,24 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.gotToMyLocation = this.gotToMyLocation.bind(this);
+        this.createContapoint = this.createContapoint.bind(this);
         this.state= {
-            mapMargin:1
+            mapMargin:1,
+            markers: []
         }
+        this.handlePress = this.handlePress.bind(this);
+    }
+
+    handlePress(e) {
+        this.setState({
+            markers: [
+                ...this.state.markers,
+                {
+                    coordinate: e.nativeEvent.coordinate,
+                    cost: `$${getRandomInt(50, 300)}`
+                }
+            ]
+        })
     }
 
     setMargin = () => {
@@ -58,30 +100,14 @@ class App extends Component {
         console.log('gotToMyLocation is called')
         var latitude_i = 0
         var longitude_i = 0
-        //this.viewTwo.viewOne.reg
-        //this.map.latitude = 0;
-        //this.setState({ region });
         GetLocation.getCurrentPosition({
             enableHighAccuracy: true,
             timeout: 15000,
         })
             .then(location => {
                 console.log(location);
-                latitude_i = location.latitude;
-                longitude_i = location.longitude;
+                return location;
                 //this.setState({ region });
-                if (this.map) {
-                    console.log("curent location: ", location)
-                    this.setState({ m_latitude: this.location.latitude });
-                    this.setState({ m_longitude: this.location.longitude });
-                    console.log("longitudee here", this.state.m_longitude);
-                    this.map.animateToRegion({
-                        latitude: location.latitude,
-                        longitude: location.longitude,
-                        latitudeDelta: 0.005,
-                        longitudeDelta: 0.005
-                    })
-                }
             })
             .catch(error => {
                 const { code, message } = error;
@@ -89,18 +115,13 @@ class App extends Component {
             })
     }
 
-    // onMapReady = () => {PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)
-    //     .then(granted => {
-    //         this.setState({ paddingTop: 0 });
-    //     });
-    // };
-
     componentWillMount(){
         this.gotToMyLocation();
         console.log("longitude ", this.state.m_longitude)
     }
 
   render() {
+        //const { locations, position } = this.gotToMyLocation()
     return (<View style={styles.container}>
           <MapView
              // ref={(map) => { this.map = map; }}
@@ -349,6 +370,7 @@ class App extends Component {
               showsMyLocationButton={true}
               style={{ width: 410, height: 720,  justifyContent: 'center', marginBottom: this.state.mapMargin }}
               onMapReady={this.setMargin}
+              onPress={(e) => this.setState({ marker: e.nativeEvent.coordinate })}
           >
             <Marker coordinate={{ latitude: 52.0, longitude: 18.2 }} />
             <Marker coordinate={{ latitude: 52.4, longitude: 18.7 }} />
@@ -356,29 +378,42 @@ class App extends Component {
             <Marker coordinate={{ latitude: 52.6, longitude: 18.3 }} />
             <Marker coordinate={{ latitude: 51.6, longitude: 18.0 }} />
             <Marker coordinate={{ latitude: 53.1, longitude: 18.8 }} />
+            <Marker coordinate={{ latitude: 46.936984, longitude: 7.792644 }} />
             <Marker coordinate={{ latitude: 52.9, longitude: 19.4 }} />
-            <Marker coordinate={{ latitude: 52.2, longitude: 21 }} />
+            <Marker
+                coordinate={{ latitude: 46.936595, longitude: 7.792590 }}>
+            <View style={styles.button}>
+                <Text style={{color: 'red'}}>{"7/10"}</Text>
+            </View>
+          </Marker>
+            <Marker coordinate={{ latitude: 46.937226, longitude: 7.792061 }} />
+            <Marker coordinate={{ latitude: 46.936935, longitude: 7.791678 }} />
+              {
+                  this.state.markers.map((marker, i) => (
+                      <MapView.Marker key={i} coordinate={marker.latlng} />
+                  ))
+              }
           </MapView>
             <View style={{ flex: 1, flexDirection: 'row' }}>
+                {/*<TouchableOpacity*/}
+                {/*    // onPress={() => this.gotToMyLocation}*/}
+                {/*    onPress={this.gotToMyLocation}*/}
+                {/*    style={{*/}
+                {/*        borderWidth:1,*/}
+                {/*        borderColor:'rgba(0,0,0,0.2)',*/}
+                {/*        alignItems:'center',*/}
+                {/*        justifyContent:'center',*/}
+                {/*        width:100,*/}
+                {/*        height:100,*/}
+                {/*        backgroundColor:'#15354F',*/}
+                {/*        borderRadius:50,*/}
+                {/*    }}*/}
+                {/*>*/}
+                {/*    <Icon name={"crosshairs"} type = 'font-awesome'  size={75} color="#239AE0" />*/}
+                {/*</TouchableOpacity>*/}
                 <TouchableOpacity
                     // onPress={() => this.gotToMyLocation}
-                    onPress={this.gotToMyLocation}
-                    style={{
-                        borderWidth:1,
-                        borderColor:'rgba(0,0,0,0.2)',
-                        alignItems:'center',
-                        justifyContent:'center',
-                        width:100,
-                        height:100,
-                        backgroundColor:'#15354F',
-                        borderRadius:50,
-                    }}
-                >
-                    <Icon name={"crosshairs"} type = 'font-awesome'  size={75} color="#239AE0" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    // onPress={() => this.gotToMyLocation}
-                    onPress={this.gotToMyLocation}
+                    //onPress={this.handlePress}
                     style={{
                         borderWidth:1,
                         borderColor:'rgba(0,0,0,0.2)',
